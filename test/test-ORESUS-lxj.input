@@ -1,0 +1,93 @@
+)clear all
+)compile ORESUS-lxj.spad
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-- Definition
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+R := EXPR INT
+S : Symbol := 'D
+F := (operator 'f)[t]
+sigma : Automorphism(R) := 1
+invsigma : Automorphism(R) := 1
+delta : R -> R := f +-> D(f,t)
+
+PDO := ORESUS(R,S,sigma,invsigma,delta)
+
+
+coefList1: Stream R := [F,-F, 1]
+coefList2: Stream R := [delta(F),delta(F)]
+coefStream1: Stream R := [F for i in 1..]
+--coefStream2: Stream R := [i*F for i in 1..7]
+
+constantPDO := coerce(F) $ PDO
+finitePDO1 := generate(coefList1, 3) $ PDO
+finitePDO2 := generate(coefList2, 1) $ PDO
+infinitePDO1 := generate(coefStream1, -1, minusInfinity()) $ PDO
+infinitePDO2 := generate(coefList1, 3, minusInfinity()) $ PDO
+zeroPDO : PDO := 0 $ PDO
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-- PDO plus test
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+-- Finite + Finite
+constantPDO + finitePDO1
+finitePDO1 + finitePDO2
+zeroPDO + finitePDO2
+
+-- Finite + infinite
+constantPDO + infinitePDO1
+finitePDO1 + infinitePDO1
+zeroPDO + infinitePDO1
+
+-- Infinite + infinite
+infinitePDO1 + infinitePDO2
+infinitePDO1 - infinitePDO1
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-- x multiplies a PDO
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-- x multiplies a constant
+leftMultiplyByX(constantPDO)
+
+-- x multiplies a finite
+leftMultiplyByX(finitePDO1)
+
+-- x multiplies a infinite
+leftMultiplyByX(infinitePDO1)
+
+-- x multiplies a zero
+leftMultiplyByX(zeroPDO)
+
+
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-- x^{-1} multiplies a PDO
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-- x^{-1} multiplies a constant
+leftMultiplyByInvX(constantPDO)
+
+-- x^{-1} multiplies a finite
+leftMultiplyByInvX(finitePDO1)
+
+-- x^{-1} multiplies a infinite
+leftMultiplyByInvX(infinitePDO1)
+
+-- x^{-1} multiplies a zero
+leftMultiplyByInvX(zeroPDO)
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+CoefStream := [operator(subscript('U,[i::OutputForm]))[x,t] for i in 1..]
+
+L:PDO := generate(CoefStream, -1, minusInfinity())$PDO + generate([1],1)$PDO
+
+B2:PDO := positivePart(L^2)$PDO
+B3:PDO := positivePart(L^3)$PDO
+
+B2*B3 - B3*B2
+

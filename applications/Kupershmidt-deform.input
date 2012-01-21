@@ -1,0 +1,45 @@
+)clear all
+)compile ORESUS-lxj.spad
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-- Definition
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+R := EXPR (INT)
+S : Symbol := 'D
+W := (operator 'w)[x]
+U := (operator 'u)[x]
+
+sigma : Automorphism(R) := 1
+invsigma : Automorphism(R) := 1
+delta : R -> R := f +-> D(f,x)
+
+PDO := ORESUS(R,S,sigma,invsigma,delta)
+
+--deformTerms:= [operator(subscript('w,[i::OutputForm]))[x] for i in 1..]
+
+--DF:PDO := generate(deformTerms, -1, minusInfinity())$PDO
+LAX :PDO := generate([1,0,U], 2)$PDO
+
+--result:= DF * LAX - LAX * DF
+
+--knownRules := rule
+--    %w[1] == -1/2*%W
+--    %w[2] == 1/4*%W
+----    D(w[3],x) == -1/8*D(W,[x,x,x]) + 1/4*W*D(U,x)
+
+--term0:= knownRules coefficient(result, 0)
+--term1:= knownRules coefficient(result, -1)
+--term2:= knownRules coefficient(result, -2)
+--term3:= knownRules coefficient(result, -3)
+--term4:= knownRules coefficient(result, -4)
+
+A :PDO := generate([-1/2*W, 1/4*D(W,x)],1)
+Deform:= A * inv(LAX)
+result:= Deform * LAX - LAX * Deform
+
+coef := coefficient(result, -2)
+knownRules := rule (coef == 0)
+
+[knownRules (coefficient(result, -i)$PDO) for i in 1..20]
+

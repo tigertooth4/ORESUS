@@ -1,0 +1,78 @@
+\documentclass{article}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{xltxtra}
+%\usepackage[left=1in,right=0.8in,top=1.2in,bottom=0.9in]{geometry}
+
+\setmainfont{STKaiti}
+\setsansfont{STHeiti}
+
+\title{斜级数环中的代数运算}
+%\author{lxj}
+\date{}
+\newtheorem{lem}{引理}
+\newtheorem{prop}{命题}
+\newtheorem{thm}{定理}
+
+\begin{document}
+\maketitle
+
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt
+
+{\tt SkewSeries} 是一个范畴 ({\tt Category})，用数学的语言表示为
+\begin{equation}
+  \label{eq:1}
+  \mathtt{SkewSeries}(R,\sigma,\delta) := \left\{ \sum_{i=N}^{+\infty}a_ix^{-i}\bigg| a_i\in R\right\}
+\end{equation}
+其中 $x$ 是未定元，$R$ 是一个含幺环，$\sigma:R\longrightarrow R$ 是 $R$ 上的一个自同构，$\delta:
+R\longrightarrow R$ 是一个与$\sigma$相联系的导子，即满足$\delta(ab) = \delta(a) b + \sigma(a)
+\delta(b)$, 对环中任意元素$a$，$b$. 所谓斜级数，是指 $x$ 与 $a\in R$ 的乘法是不可交换的，满足
+\begin{equation}
+  \label{eq:2}
+  x a = \sigma(a) x + \delta(a)
+\end{equation}
+从这个最基本的运算法则出发，我们可以定义$x^{-1}a$：假设$x^{-1} a = \sum_{i=1}^{+\infty}a_i x^{-i}$,
+利用待定系数法，我们知道
+\begin{align*}
+  x\cdot x^{-1} a = a &= x\cdot \sum_{i=1}^{+\infty}a_i x^{-i}\\
+  &=\sigma(a_1) + \sum_{i=1}^{+\infty}\left(\sigma(a_{i+1})+\delta(a_i)\right)x^{-i}
+\end{align*}
+比较各次幂的系数，我们得到
+\begin{align*}
+  a_1 &= \sigma^{-1}(a)\\
+  a_2 &= -\sigma^{-1}\delta(a_1)\\
+  a_3 &= -\sigma^{-1}\delta(a_2)=\left(-\sigma^{-1}\delta\right)^2\sigma^{-1}(a)\\
+  \cdots &=\cdots\\
+  a_{i+1} &= \left(-\sigma^{-1}\delta\right)^{i}\sigma^{-1}(a).
+\end{align*}
+因此
+\begin{displaymath}
+  x^{-1} a = \sum_{i=1}^\infty \left(-\sigma^{-1}\delta\right)^{i-1}\sigma^{-1}(a) x^{-i}.
+\end{displaymath}
+
+
+\begin{lem}\fontspec{Hei}
+  设一个最高项为$N$的斜级数$$s=a_1 x^N+a_2 x^{N-1} + a_3 x^{N-2}+ \cdots $$
+  则$x^{-1} s = \sum_{k=1}^{+\infty} b_k x^{N-k}$, 其中
+  \begin{displaymath}
+    b_k = \sum_{i=1}^k(-\sigma^{-1}\delta)^{k-i}\sigma^{-1}(a_i).
+  \end{displaymath}
+\end{lem}
+\begin{proof}[证明.]
+  \begin{align*}
+    x^{-1} s &=  x^{-1} \sum_{i=1}^{+\infty}a_ix^{-i}\cdot x^{N+1} \\ 
+    &= \sum_{i=1}^\infty \sum_{j=1}^\infty (-\sigma^{-1}\delta)^{j-1}\sigma^{-1}(a_i) x^{-i-j}\cdot
+    x^{N+1}\\
+    &=\sum_{k=2}^\infty\sum_{i=1}^{k-1}(-\sigma^{-1}\delta)^{k-i-1} \sigma^{-1}(a_i) x^{N+1-k}\\
+    &=\sum_{k=1}^\infty\sum_{i=1}^k (-\sigma^{-1}\delta)^{k-i}\sigma^{-1}(a_i) x^{N-k}
+  \end{align*}
+\end{proof}
+而易知
+\begin{displaymath}
+  x s = \sigma(a_N)x^{-N+1}+\sum_{j=N}^{+\infty}\left(\sigma(a_{j+1})+\delta(a_j)\right) x^{-j}.
+\end{displaymath}
+
+\section{接口}
+
+
+\end{document}

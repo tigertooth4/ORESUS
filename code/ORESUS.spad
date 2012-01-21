@@ -1,0 +1,460 @@
+-- Univariate Skew Series Domain
+
+)abb domain ORESUS UnivariateSkewSeries
+
+B   ==>	Boolean
+I   ==> Integer
+NNI ==> NonNegativeInteger
+INF ==> OrderedCompletion I
+Sy  ==> Symbol
+LS  ==> List Sy
+PC  ==> UnivariatePolynomial(Var,R) 
+BOP ==> BasicOperator
+OUT ==> OutputForm
+LC  ==> List R
+SC  ==> Stream R
+
+SLen ==> _$streamCount$Lisp
+SMin ==> minIndex([1$R]::SC)
+
+
+UnivariateSkewSeries(R:Ring, Var:Symbol, sigma:Automorphism R, invsigma:Automorphism R, delta: R -> R) : Exports == Implementation where
+
+    Exports == Join(Ring, BiModule(R, R)) with
+
+	coerce : (R) -> %
+	    ++ \axiom{coerce(r)} converts an element of 
+	    ++ \axiom{Ring} into a skew series.
+	    
+	generate: (SC,I) -> %
+	    ++ \axiom{generate(sc,n) generates a skew 
+	    ++ series of order \axiom{n} from a stream 
+	    ++ \axiom{sc} of coefficients.
+
+	generate: (LC,I) -> %
+	    ++ \axiom{generate(lc,n) generates a skew 
+	    ++ series of order \axiom{n} from a list 
+	    ++ \axiom{lc} of coefficients.
+
+	generate: (SC,I,INF) -> %
+	    ++ \axiom{generate(cs, m, n)} generate skew
+	    ++ series by explicitly indicating the lowest
+	    ++ order.
+
+        pos: % -> %
+            ++ \axiom{pos(s)} computes the non-negative
+	    ++ part of the skew series \axiom{s}
+
+        neg : % -> %                                                                
+            ++ \axiom{neg(s)} computes the negative part 
+	    ++ of the skew series \axiom{s}.  
+
+	order: (%) -> I
+	    ++ \axiom{order(s)} returns the highest 
+	    ++ exponent index occuring in \axiom{s}.
+
+	lowestOrder: (%) -> INF
+	    ++ \axiom{lowestOrder(s)} returns the lowest
+	    ++ exponent index occuring in \axiom{s}.
+
+	coefficient: (%, I) -> R
+	    ++ \axiom{coefficient(s,i)} returns the 
+	    ++ coefficient of a specific exponent 
+	    ++ \axiom{DOp^i}.
+
+	coefficients: (%) -> SC
+	    ++ \axiom{coefficients(s)} returns the stream 
+	    ++ of the coefficients of a skew series \axiom{s}.
+
+	leadingCoefficient: (%) -> R
+	    ++ \axiom{leadingCoefficient(s)} returns the 
+	    ++ highest order exponent's coefficient of a
+	    ++ skew series \axiom{s}
+
+	0: constant -> %
+	    ++ \axiom{0} creates a zero skew series.
+
+	1: constant -> %
+	    ++ \axiom{1} creates a identity skew series.
+
+	"=": (%, %) -> Boolean
+	    ++ \axiom{s1=s2} tests if two skew series are 
+	    ++ equal.
+
+	"+": (%, %) -> %
+	    ++ \axiom{s1+s2} computes the sum of two skew
+	    ++ series. The sum is based on the exponents.
+
+	"-": (%) -> %
+	    ++ \axiom{-s1} returns a skew series, which is
+	    ++ the additive inverse of \axiom{s1}.
+
+	"*": (%, %) -> %
+	    ++ \axiom{s1*s2} computes the product of two
+	    ++ skew series, yields a new skew series.
+
+	if R has IntegralDomain then
+	    inv:  (%) -> Union(%, "failed")
+		++ \axiom{inv(s)} computes the productive
+		++ inverse of a skew series. In order to
+		++ do that, the leading coefficient of this
+		++ skew series must be inversible. For 
+		++ simplicity, we only consider the case
+		++ when coefficient domain is an integral
+		++ domain. In this case, if leading coefficient
+		++ is an inversible element, then the \axiom{inv(s)}
+		++ can be calculated. Otherwise, \axiom{inv(s)} 
+		++ returns "failed".
+
+	    "^":(%,I) -> Union(%, "failed")
+		++ \axiom{s^n} computes the \axiom{n}-th 
+		++ exponents of \axiom{s}. When \axiom{n<0},
+		++ the \axiom{inv(s)} is first calculated.
+		++ So the coefficients domain should be an
+		++ integral domain.
+ 
+--        leftMultiplyByX: (%) -> %
+
+--	multiplyInvXStream: (%, NNI) -> SC
+
+
+--	leftMultiplyByInvX: (%) -> %
+--	leftMultiplyByNegativePart: (%, %) -> % 
+--	multiplyNegativePartStream: (%, %, PositiveInteger, %) -> SC
+
+
+    Implementation == add
+    
+	Rep := Record(coef:SC, hi: I, lo: INF)
+
+	coerce(r:R):% == [[r]::SC, 0, 0::INF]
+	
+	generate(s:SC, deg:I):% == 
+	    explicitlyFinite? s => [s, deg, (deg-#entries(s)+1)::INF]
+	    [s, deg, minusInfinity()]
+
+	generate(s:SC, deg:I, low:INF):% == 
+	    [s, deg, low]
+
+	generate(l:LC, deg:I):% == 
+	    generate(l::SC, deg, (deg-#l+1)::INF) 
+
+        neg(x:%):% ==                                                               
+            n := x.hi                                                             
+            n<0$I => x                                                                
+            finite?(m:=x.lo) and retract(m)>=0$I => 0$%                            
+            cs := x.coef                                                              
+            for i in 0..n repeat                                                      
+                cs := rest cs                                                           
+            [cs,-1,x.lo]      
+
+	pos(x:%):% ==
+	    x.hi < 0 => 0$%
+	    x.lo >= 0 => x
+	    n: I := x.hi + SMin
+	    cs: LC := [x.coef.i for i in SMin..n]
+	    [cs::SC, x.hi, 0::INF]
+
+	order(s:%) : I == s.hi
+
+	lowestOrder(s:%) : INF == s.lo 
+
+	coefficients(s:%): SC == s.coef
+
+	coefficient(s:%, i:I): R ==
+	    i>(n:= order s) => 0
+	    k := n-i
+	    xc := extend(s.coef, k+SMin)
+	    explicitlyFinite?(xc) and (k>= #entries xc) => 0
+	    s.coef.(k+SMin)
+	
+	leadingCoefficient(s:%): R ==
+	    cs: SC := s.coef
+	    empty? cs => 0$ R
+	    cs.1
+	
+	-- ----------- --
+	-- Output Form --
+	-- ----------- --
+
+	monom(r:R, n: I):OUT == 
+	    -- Output of a monom 
+	    -- Called by polynom
+	    n=0 => r::OUT
+	    res := Var::OUT
+	    if not(n=1) then
+		res := res^n::OUT
+	    if not one? r then
+		res := r::OUT * res
+	    res	
+
+	polynom(ls:LC, n: I):OUT ==
+	    -- Output of a polynomial
+	    -- Called by coerce
+	    lt := ls
+	    erg:List OUT := empty()
+	    i:NNI
+	    for i in 0.. while not empty?(lt) repeat
+		c := first(lt)
+		if not zero? c then
+		    erg := cons(monom(c,n-i),erg)
+		lt := rest lt
+	    empty? erg => 0$I :: OUT
+	    #erg =1 => first erg
+	    reduce("+",reverse! erg)
+
+	coerce(s:%): OUT ==
+	    -- Output a skew series
+	    -- for possibly infinite Skew series, the order of possible further
+	    -- terms is indicated
+	    empty?(cs:=s.coef) => 0$R::OUT
+	    cs := extend(cs, SLen)
+	    explicitlyFinite? cs => polynom(entries cs, s.hi)
+	    i:NNI
+	    polynom([cs.i for i in SMin..SLen],s.hi)+ prefix("O"::OUT, [Var::OUT^(s.hi-SLen-SMin+1)::OUT])
+
+	-- ----------------- --
+	-- Local Functions   --
+	-- ----------------- --
+	move(x:SC,n:NNI):SC ==                                                      
+	    -- Adds n leading zeros.                                                  
+	    -- Called by "+".                                                         
+	    insert([0$R for i in 1..n]::SC,x,1)                                 
+										    
+										    
+	cutHead(x:%):% ==                                                           
+	    -- Erases leading zeros in coefficient stream.                            
+	    -- Called by "+" and differentiate.                                       
+	    cs := x.coef                                                              
+	    count := 0$NNI                                                            
+	    while not empty?(cs) and zero? frst(cs) and (count<=SLen) and ((x.hi-count)::INF > x.lo) repeat -- add one condition          
+		cs := rst cs                                                            
+		count := count+1                                                        
+	    empty? cs => 0                                                            
+	    [cs,x.hi-count,x.lo]                                                
+										    
+										    
+	cutTail(x:%):% ==                                                           
+	    -- Erases trailing zeros in coefficient stream of finite PDOs.            
+	    -- Called by "+".                                                         
+	    infinite?(x.lo) => x                                                   
+	    n := (x.hi-retract(x.lo)+SMin)::NNI                                 
+	    cs:LC :=  [x.coef.i for i in SMin..n]                                     
+	    while last(cs)=0 and (n > 1) repeat   -- add one condition                                                
+		n := (n-1)::NNI                                                         
+		cs := first(cs,n)                                                       
+	    [cs::SC,x.hi,(x.hi-n+1)::INF]    
+ 
+
+	repeatedAct(aMap: R -> R, n: NNI, r: R): R ==
+	    n = 0 => r
+	    res: R := r
+	    for i in 1..n repeat
+		res := aMap(res)
+	    res	
+                              
+
+	termForInvX(s:%, k:NNI):R ==
+	    --k = 1 => sc.1
+	    action : R -> R := r +-> - invsigma(delta(r))
+	    res: R := 0 $ R
+	    for i in 1..k repeat
+		r :R := coefficient(s, s.hi +1 -i)
+		res := res + repeatedAct(action, (k-i)::NNI, invsigma(r))
+	    res 
+
+
+	-- ------------------------- --                                             
+	-- Simple Algebra Operations --                                             
+	-- ------------------------- --                                             
+										    
+	0 : % == [[0$R]::SC,0,0$INF]
+										    
+	1 : % == [[1$R]::SC,0,0$INF]                                          
+										    
+	x:% = y:%  == (x.hi=y.hi) and (x.lo=y.lo) and (x.coef=y.coef)   
+					
+	x:% + y:% ==                                                                
+	    n := x.hi - y.hi
+	    h := max(x.hi,y.hi)                                                 
+	    l := min(x.lo,y.lo)   
+	    coefStreamX : SC := x.coef
+	    coefStreamY : SC := y.coef
+	    sumCoef: (R,R) -> R := (r1,r2) +-> r1+r2
+	    
+	    -- align heads
+	    if x.hi > y.hi then                                                              
+	      	coefStreamY := move(coefStreamY, n::NNI)
+	    if x.hi < y.hi then
+		coefStreamX := move(coefStreamX, (-n)::NNI)
+	   
+	    -- complete tail in order to add
+	    if x.lo < y.lo then
+		coefStreamY := concat(coefStreamY, repeating[0])
+	    if x.lo > y.lo then
+		coefStreamX := concat(coefStreamX, repeating[0])
+
+	    res : SC := map(sumCoef, coefStreamX, coefStreamY)
+	
+	    infinite? l =>  cutHead [res,h,l]                                          
+	    cutTail cutHead [extend(res,h-retract(l)+1),h,l]   
+
+	-x:% == 
+	    minusCoef: R -> R := r1 +-> -r1
+	    [map(minusCoef,x.coef),x.hi,x.lo]
+
+
+        -- --------------------- --
+        --    Multiplication     --
+        -- --------------------- --
+        leftMultiplyByCoef(r: R, s:%):% ==
+	    -- added by LXJ.
+	    s = 0 $ % => 0$%
+	    multByCoefMap: R -> R := r1 +-> r*r1
+	    coefStream: SC := s.coef
+	    generate(map(multByCoefMap, coefStream), s.hi, s.lo)
+
+	leftMultiplyByX(s:%):% ==
+	    -- Modified by LXJ. Remove complete function, using NEW generate
+            aSigmaMap: R -> R := r +-> sigma(r)
+            if infinite? s.lo then
+                t1:% := generate( map(delta,s.coef), s.hi, s.lo)
+                t2:% := generate( map(aSigmaMap,s.coef), s.hi+1, s.lo)
+            else
+                t1:% := generate( map(delta,s.coef), s.hi, s.lo)
+                t2:% := generate( map(aSigmaMap,s.coef), s.hi+1, (retract(s.lo)+1)::INF)
+            t1 + t2
+
+	multiplyInvXStream(x:%, k:NNI): SC ==
+	    currentTerm : R := 0 $ R
+	    act : R -> R := r +-> - invsigma(delta(r))
+	    sc : SC := x.coef
+	    if finite? x.lo then
+	        sc := concat(sc, repeating[0])::SC
+    
+	    for i in 1..k repeat
+		r :R := sc.i
+		currentTerm := currentTerm + repeatedAct(act, (k-i)::NNI, invsigma(r))
+	    delay		
+		concat(currentTerm, multiplyInvXStream(x, k+1))
+
+
+	leftMultiplyByInvX(s:%):% ==
+	    s = 0 $ % => 0 $ %
+	    -- if s is zero, return immediately (check the rule for delta and sigma)
+	    res: SC := multiplyInvXStream(s, 1) 
+	    -- the following is not always infinitly many terms. Just for 
+	    -- simplicity.
+	    generate(res, s.hi-1, minusInfinity())
+
+
+	leftMultiplyByNonNegativePart(x:%, y: %) : % ==
+	    x.hi <0 => 0 $ %
+	    result : % := 0 $ %
+	    lowOrder : I := retract(max(0::INF, x.lo))
+	    lowOrder > x.hi => 0 $ %
+	    -- lowestOrder cannot beyond x.hi. So if it happens, returns 0
+	    previousResult :% := y
+	    if (lowOrder>0) then
+		for i in 1..lowOrder repeat
+		    previousResult := leftMultiplyByX(previousResult)
+	    
+	    for i in lowOrder..x.hi repeat
+		theCoef := coefficient(x, i)
+		result := result + leftMultiplyByCoef(theCoef, previousResult)
+		previousResult := leftMultiplyByX(previousResult)
+	    result
+
+	multiplyNegativePartStream(x:%, y:%, k:PositiveInteger, preProcess:%) : SC ==
+	    -- assume x.lo < 0
+	    currentTerm : R := 0$ R
+	    firstOrder:I := min(-1, x.hi)
+	    numTerms: INF := (firstOrder::INF) - x.lo + 1 
+	
+	    finiteTermResult :% := 0$%
+	    previousResult:% := preProcess
+
+	    for i in 1..retract(min(k::INF, numTerms)) repeat
+		theCoef := coefficient(x, firstOrder -i + 1)
+		finiteTermResult := finiteTermResult + leftMultiplyByCoef(theCoef, previousResult)
+		previousResult := leftMultiplyByInvX(previousResult)
+
+	    currentTerm := coefficient(finiteTermResult, firstOrder + y.hi-k + 1)
+	       
+ 	    delay
+	 	concat(currentTerm, multiplyNegativePartStream(x,y, k+1, preProcess))
+
+	leftMultiplyByNegativePart(x:%, y:%) : % ==
+	    x.lo >= 0 => 0 $ %
+	    firstOrder := min(x.hi, -1)
+	    preMultiplyResult := y
+
+	    for i in 1..(-firstOrder) repeat
+		preMultiplyResult := leftMultiplyByInvX(preMultiplyResult)
+
+	    [multiplyNegativePartStream(x,y, 1::PositiveInteger, preMultiplyResult), y.hi+firstOrder, minusInfinity()]
+	     
+	x:% * y:% ==
+            leftMultiplyByNonNegativePart(x,y) + leftMultiplyByNegativePart(x,y)
+
+	-- --------------------- --
+	-- Inverse of an ORESUS  --
+	-- --------------------- --
+
+	if R has IntegralDomain then 
+	    invStream(x:%, leadingCoef:R, leadingOrder:I, usedTerms:%, n:NNI, knownInv:%): SC ==
+		-- 计算一个算子逆的系数流, n 表示逆算子的第n个系数, n>1
+		-- 首先截取x的前n-1项，做成一个ORESUS，与已算出的
+		-- （knownInv）ORESUS相乘，提取第n项系数
+		-- 其中 x 是要取逆的算子, leadingCoef 是 x 的首项系数
+		-- m 是 x 的最高阶次数，n 是要算的第n阶，usedTerms是x的前n-1阶，knownInv
+		-- 逆算子已经算出的部分
+		an := coefficient(x, leadingOrder-n+1)
+		thisTerm :% := generate([an],leadingOrder-n+1)
+		tmp := (usedTerms + thisTerm) * knownInv
+		a :R := coefficient(tmp, -n+1)
+		b := - (a exquo leadingCoef) :: R
+
+		if leadingOrder >= 0 then
+		    action: R-> R := r +-> invsigma(r)
+		    b := repeatedAct(action, leadingOrder::NNI, b)
+		else
+		    action: R-> R := r +-> sigma(r)
+		    b := repeatedAct(action, (-leadingOrder)::NNI, b)
+		thisInvTerm :% := generate([b], -leadingOrder - n +1)
+		delay
+		    concat(b, invStream(x, leadingCoef, leadingOrder, usedTerms+thisTerm, n+1, knownInv + thisInvTerm))
+		
+		
+	    inv(x:%): Union(%, "failed") == 
+	        -- 计算一个算子的逆, 首先这个算子的首项必须是可逆的，然后
+	        -- 我们用递归的办法逐渐算出它的逆
+		leadingCoef : R := leadingCoefficient(x)
+		not unit?(leadingCoef) => "failed"
+
+		m: I := order(x)
+
+		usedTerm:% := generate([leadingCoef],m) $ %
+		b: R := (1 exquo leadingCoef)::R
+		if m>=0 then
+		    action: R-> R := r +-> invsigma(r)
+		    b := repeatedAct(action, m::NNI, b)
+		else
+		    action: R-> R := r +-> sigma(r)
+		    b := repeatedAct(action, (-m)::NNI, b)
+		knownInv : % := generate([b], -m) $ %		
+
+		cs:SC := invStream(x, leadingCoef, m, usedTerm, 2, knownInv)
+         	cs := concat(b, cs)
+		[cs, -m, minusInfinity()]
+
+
+	    x:% ^ n:I ==
+	    	n = 0 => 1 $ %
+	    	n > 0 => x^n
+		res := 0 $ %
+	    	if n < 0 then
+		    (xInv := inv(x)) case "failed" => return "failed"
+		    res := (xInv::%) ^ ((-n)::NNI)
+	    	res
+ 
