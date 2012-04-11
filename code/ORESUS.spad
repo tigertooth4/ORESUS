@@ -89,9 +89,27 @@ UnivariateSkewSeries(R:Ring, Var:Symbol, sigma:Automorphism R, invsigma:Automorp
 	    ++ \axiom{-s1} returns a skew series, which is
 	    ++ the additive inverse of \axiom{s1}.
 
+	"+": (R, %) -> %
+	    ++ \axiom{r+s} computes the sum of an element
+	    ++ in R and an element of skew series, which is
+	    ++ done by convert r to a skew series of 0-order.
+
+	"+": (%, R) -> %
+	    ++ \axiom{s+r} is similar to the previous one.
+
 	"*": (%, %) -> %
 	    ++ \axiom{s1*s2} computes the product of two
 	    ++ skew series, yields a new skew series.
+
+	"*": (R, %) -> %
+	    ++ \axiom{r*s} 
+
+	"*": (%, R) -> %
+	    ++ \axiom{s*r}
+
+	commutator: (%,%) -> %
+	    ++ \axiom{commutator} computes the commutator of 
+	    ++ two skew series, namely A*B-B*A.
 
 	if R has IntegralDomain then
 	    inv:  (%) -> Union(%, "failed")
@@ -299,6 +317,10 @@ UnivariateSkewSeries(R:Ring, Var:Symbol, sigma:Automorphism R, invsigma:Automorp
 	    infinite? l =>  cutHead [res,h,l]                                          
 	    cutTail cutHead [extend(res,h-retract(l)+1),h,l]   
 
+	r:R + x:% == generate([r],0) + x
+
+	x:% + r:R == x + generate([r],0)
+
 	-x:% == 
 	    minusCoef: R -> R := r1 +-> -r1
 	    [map(minusCoef,x.coef),x.hi,x.lo]
@@ -397,6 +419,12 @@ UnivariateSkewSeries(R:Ring, Var:Symbol, sigma:Automorphism R, invsigma:Automorp
 	x:% * y:% ==
             leftMultiplyByNonNegativePart(x,y) + leftMultiplyByNegativePart(x,y)
 
+
+	r:R * x:% == generate([r],0) * x
+
+	x:% * r:R == x * generate([r],0)
+
+	commutator(x:%, y:%) : % == x * y - y * x 
 	-- --------------------- --
 	-- Inverse of an ORESUS  --
 	-- --------------------- --
